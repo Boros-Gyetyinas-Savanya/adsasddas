@@ -50,12 +50,15 @@ namespace Jelmez2
                     megtalalta = true;
                     label4.Visible = false;
 
-                    lineList[sorszam] = $"{textBox1.Text};{textBox2.Text};{textBox3.Text}";
+
+                    lineList[sorszam] = $"{textBox1.Text};{textBox2.Text};{textBox3.Text};{textBox4.Text};{checkBox1.Checked}";
 
                     listBox1.Items[sorszam] = textBox1.Text;
                     textBox1.Text = "";
                     textBox2.Text = "";
-                    textBox3.Text = "";                    
+                    textBox3.Text = "";
+                    textBox4.Text = "";
+                    checkBox1.Checked = false;
                 }
                 if (!megtalalta)
                 {
