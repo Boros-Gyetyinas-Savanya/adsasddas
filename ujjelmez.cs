@@ -46,11 +46,12 @@ namespace Jelmez2
             else
             {
                 StreamWriter sw = new StreamWriter("jelmezek.txt", true);
-                sw.WriteLine($"{textBox1.Text};{textBox2.Text};{textBox3.Text}");
+                sw.WriteLine($"{textBox1.Text};{textBox2.Text};{textBox3.Text};{textBox4.Text};false");
                 sw.Flush(); sw.Close();
                 textBox1.Text = "";
                 textBox2.Text = "";
                 textBox3.Text = "";
+                textBox4.Text = "";
                 label4.Visible = false;
             }
 
