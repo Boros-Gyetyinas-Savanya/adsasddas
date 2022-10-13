@@ -7,7 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Data.SQLite;
 using System.IO;
+
 
 namespace Jelmez2
 {
@@ -20,6 +22,9 @@ namespace Jelmez2
         int[] vasarlasAdatokTomb = new int[5];
         List<int[]> vasarlasAdatokList = new List<int[]>();
         int selecteditem = -1;
+        
+        
+        
         
         
         public Form1()
@@ -86,21 +91,17 @@ namespace Jelmez2
                 jelmezList.Add(jelmezObject);
             }
             sr.Close();
+
+            int kolcsonzesekSzama = 0;
             sr = new StreamReader("kolcsonzesek.txt");
             while (!sr.EndOfStream)
             {
                 string line = sr.ReadLine();
-                string[] values = line.Split(';');
-                for (int i = 2; i < 7; i++)
-                {
-                    vasarlasAdatokTomb[i-2] = int.Parse(values[i]);
-                }
-                vasarlasAdatokList.Add(vasarlasAdatokTomb);
+                kolcsonzesekSzama += 1;
             }
             sr.Close();
-
-            int maradt = vasarlasAdatokList.Count-1;
-            int[] megvan = new int[vasarlasAdatokList.Count];
+            int maradt = kolcsonzesekSzama-1;
+            int[] megvan = new int[kolcsonzesekSzama];
             for (int i = 0; i < megvan.Length; i++)
             {
                 megvan[i] = -1;
@@ -125,7 +126,7 @@ namespace Jelmez2
                             {
                                 if (item2.jelmezNev == values[1])
                                 {
-                                    Kolcsonzesek kolcsonzesek = new Kolcsonzesek(vasarlasAdatokList[vasarlasSorszam][0], vasarlasAdatokList[vasarlasSorszam][1], vasarlasAdatokList[vasarlasSorszam][2], vasarlasAdatokList[vasarlasSorszam][3], vasarlasAdatokList[vasarlasSorszam][4], item2, item);
+                                    Kolcsonzesek kolcsonzesek = new Kolcsonzesek(int.Parse(values[2]), int.Parse(values[3]), int.Parse(values[4]), int.Parse(values[5]), int.Parse(values[6]), item2, item);
                                     kolcsonzesList.Add(kolcsonzesek);
                                     igaz = true;
                                     megvan[vasarlasSorszam] = vasarlasSorszam;
@@ -201,6 +202,22 @@ namespace Jelmez2
                 sw.Close();
             }
 
+
+            sw = new StreamWriter("szamla.txt", false);
+            sw.WriteLine("Jelmezkölcsönzés számla");
+            sw.WriteLine($"Név: {kolcsonzesList[kolcsonzesList.Count-1].ugyfel.nev}");
+            sw.WriteLine($"Lakcíme: {kolcsonzesList[kolcsonzesList.Count - 1].ugyfel.cim}");
+            sw.WriteLine($"Adószáma: {kolcsonzesList[kolcsonzesList.Count - 1].ugyfel.adoszam}");
+            sw.WriteLine($"Email-címe: {kolcsonzesList[kolcsonzesList.Count - 1].ugyfel.email}");
+            sw.WriteLine($"Kikölcsönzött jelmez: {kolcsonzesList[kolcsonzesList.Count - 1].jelmez.jelmezNev} ({kolcsonzesList[kolcsonzesList.Count - 1].jelmez.minMeret}-{kolcsonzesList[kolcsonzesList.Count - 1].jelmez.maxMeret} cm)");
+            sw.WriteLine($"Megrendelt mennyiség: {kolcsonzesList[kolcsonzesList.Count - 1].db} db");
+            sw.WriteLine($"Napi ára: {kolcsonzesList[kolcsonzesList.Count - 1].jelmez.napiAr} Ft");
+            sw.WriteLine($"Napok száma: {kolcsonzesList[kolcsonzesList.Count - 1].napokSzama} Ft");
+            sw.WriteLine($"Fizetendő összeg: {kolcsonzesList[kolcsonzesList.Count - 1].jelmez.napiAr * kolcsonzesList[kolcsonzesList.Count - 1].db * kolcsonzesList[kolcsonzesList.Count - 1].napokSzama} Ft");
+
+
+
+            sw.Flush(); sw.Close();
             
             
             Táblázat táblázat = new Táblázat(); táblázat.Show(); this.Hide();
@@ -210,5 +227,79 @@ namespace Jelmez2
         {
             selecteditem = listBox1.SelectedIndex;
         }
+
+        private SQLiteConnection sql_con;
+        private SQLiteCommand sql_cmd;
+        private SQLiteDataAdapter DB;
+        private DataSet DS = new DataSet();
+        private DataTable DT = new DataTable();
+
+        //connection
+        private void SetConnection()
+        {
+            sql_con = new SQLiteConnection("Data Source=employee.db;Version=3;New=False;Compress=True;");
+        }
+
+        //set execute query
+        private void ExecuteQuery(string txtQuery)
+        {
+            SetConnection();
+            sql_con.Open();
+            sql_cmd = sql_con.CreateCommand();
+            sql_cmd.CommandText = txtQuery;
+            sql_cmd.ExecuteNonQuery();
+            sql_con.Close();
+        }
+
+        //Add
+        private void Insert()
+        {
+            string txtQuery = $"INSERT INTO employees (ID, Name) VALUES ('{textBox1.Text}', '{textBox2.Text}');";
+            ExecuteQuery(txtQuery);
+        }
+
+        private void LoadData()
+        {
+            SetConnection();
+            sql_con.Open();
+            sql_cmd = sql_con.CreateCommand();
+            string CommandText = "select * from employees";
+            DB = new SQLiteDataAdapter(CommandText, sql_con);
+            DS.Reset();
+            DB.Fill(DS);
+            DT = DS.Tables[0];
+            //dataGridView1.DataSource = DT;
+            sql_con.Close();
+        }
+
+
+        /*private void Form1_Load(object sender, EventArgs e)
+        {
+            LoadData();
+        }                
+
+        //set load DB
+        
+
+        
+        //Edit
+        private void button2_Click(object sender, EventArgs e)
+        {
+            string txtQuery = $"UPDATE employees SET Name='{textBox2.Text}' WHERE ID='{textBox1.Text}';";
+            ExecuteQuery(txtQuery);
+            LoadData();
+        }
+        //Delete
+        private void button3_Click(object sender, EventArgs e)
+        {
+            string txtQuery = $"DELETE FROM employees WHERE ID='{textBox1.Text}';";
+            ExecuteQuery(txtQuery);
+            LoadData();
+        }
+
+        private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            textBox1.Text = dataGridView1.SelectedRows[0].Cells[0].Value.ToString();
+        }*/
     }
 }
