@@ -15,6 +15,7 @@ namespace Jelmez2
         public Kezdolap()
         {
             InitializeComponent();
+            label2.Text = "Készítette: Boros Barnabás, Gyetyinás Dániel, Savanya Gergő";
         }
         private void button1_Click(object sender, EventArgs e)
         {
